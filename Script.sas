@@ -209,18 +209,6 @@ run;
  /* Pourcentage de combat gagné*/
 /******************************/
 
-data R_combattant;
-    set data;
-    keep R_fighter Winner date title_bout; 
-    rename R_fighter = Fighter;
-run;
-
-data B_combattant;
-  set data;
-  keep B_fighter Winner date title_bout;
-  rename B_fighter = Fighter;
-run;
-
 /* on crée une variable indiquant si le combat est une victoire coté rouge */
 data R_combattant;
 	set R_combattant;
@@ -236,14 +224,60 @@ data B_combattant;
 run;
 
 
+data Combattant;
+  set R_combattant B_combattant;
+run;
 
+proc sql;
+  CREATE table count_win as SELECT Fighter, sum(Win) as counter_win
+                            FROM Combattant 
+                            GROUP BY Fighter;
+  
+  CREATE table count_prop as SELECT Fighter, (counter_win*100/count) as Proportion_win
+                            FROM count_win Natural JOIN Nombre_Match;
+RUN;
+QUIT;
+
+proc sort data = count_prop;
+by  descending Proportion_win;
+run;
 
 
   /**************************************/
  /* Pourcentage de combat gagné par KO */
 /**************************************/  
-  
+data R_combattant;
+    set data;
+    keep R_fighter date R_win_by_KO_TKO; 
+    rename R_fighter = Fighter R_win_by_KO_TKO= winKOTKO;
+run;
 
+data B_combattant;
+    set data;
+    keep B_fighter date B_win_by_KO_TKO; 
+    rename B_fighter = Fighter B_win_by_KO_TKO= winKOTKO;
+run;
+
+data Combattant;
+  set R_combattant B_combattant;
+run;
+
+proc sql;
+CREATE TABLE Count_KO as SELECT Fighter, date , winKOTKO
+                      FROM Combattant
+                      GROUP BY Fighter
+                      Having date=MAX(date);
+run;
+quit;
+
+proc sort data = Count_KO;
+by  descending Date;
+run;
+
+  /**************************************/
+ /* Pourcentage de combat gagné par KO */
+/**************************************/  
+  
 
   /*****************************/
  /* Nombre de titres remportés*/
