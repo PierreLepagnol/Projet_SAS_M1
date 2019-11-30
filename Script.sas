@@ -370,7 +370,7 @@ run;
 /* 2 - Mettez tous ces résultats dans un seul et même dataframe appeler "Stat_Global" */
 
 data Stat_Global;
-   merge Count_AvgTOTALSTR Count_AvgHEAD_att Count_AvgBODY_att Count_AvgBODY_ld;
+   merge Count_AvgTOTALSTR Count_AvgHEAD_att Count_AvgHEAD_ld Count_AvgBODY_att Count_AvgBODY_ld;
    by Fighter date;
 run;
 
