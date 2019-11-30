@@ -160,55 +160,94 @@ create table Nombre_Match as SELECT Fighter, count(Fighter) as count
                             GROUP BY Fighter;
 RUN;QUIT;
  
+   /*****************************/
+  /* Nombre de titres remportés*/
+ /*****************************/
+/*On met en place les 2 tables utiles pour le calcul*/
+data R_combattant;
+    set data;
+    keep R_fighter Winner date title_bout; 
+    rename R_fighter = Fighter;
+run;
 
-/* Nombre de titres remportés*/
-data r_tab;
-set data(keep = R_fighter Winner date title_bout);
-rename R_fighter = fighter;
+data B_combattant;
+  set data;
+  keep B_fighter Winner date title_bout;
+  rename B_fighter = Fighter;
 run; 
 
-proc sort data = r_tab;
- by fighter title_bout;
-run;
-
-data r_tab;
-	set r_tab;
-	if title_bout = "True" and winner = "Red" then wintitre = 1;
-	else wintitre = 0;
-run; /* on a notre nouvelle variable qui indique un si match pour le titre et victoire du coté rouge */
-
-data b_tab;
-set ufc(keep = B_fighter Winner date title_bout);
-rename B_fighter = fighter;
+/* on crée une variable indiquant si le combat est une victoire coté rouge pour le titre */
+data R_combattant;
+	set R_combattant;
+	if title_bout = "True" and winner = "Red" then WinTitle = 1;
+	else WinTitle = 0;
 run; 
-proc sort data = b_tab;
- by fighter title_bout;
-run;
-data b_tab;
-	set b_tab;
-	if title_bout = "True" and winner = "Blue" then wintitre = 1;
-	else wintitre = 0;
-run; /* on a notre nouvelle variable qui indique un si match pour le titre et victoire du coté bleu */
 
-data tab_sql;
-set r_tab b_tab;
+/* on crée une variable indiquant si le combat est une victoire coté bleu pour le titre */
+data B_combattant;
+	set B_combattant;
+	if title_bout = "True" and winner = "Blue" then WinTitle = 1;
+	else WinTitle = 0;
+run; 
+
+data Combattant;
+set R_combattant B_combattant;
 run;
 
-PROC SQL;
-CREATE table nodup_wintitre as
-SELECT fighter, max(date) as date FORMAT ddmmyy10. , sum(wintitre) as wintitre
-FROM tab_sql
-GROUP BY fighter;
+proc sql;
+  CREATE table count_titre as SELECT Fighter, sum(WinTitle) as Counter
+                              FROM Combattant
+                              GROUP BY Fighter;
 QUIT;
-proc sort data = nodup_wintitre ;
-by  descending wintitre;
+
+proc sort data = count_titre ;
+by  descending Counter;
+run;
+
+
+  /******************************/
+ /* Pourcentage de combat gagné*/
+/******************************/
+
+data R_combattant;
+    set data;
+    keep R_fighter Winner date title_bout; 
+    rename R_fighter = Fighter;
+run;
+
+data B_combattant;
+  set data;
+  keep B_fighter Winner date title_bout;
+  rename B_fighter = Fighter;
+run;
+
+/* on crée une variable indiquant si le combat est une victoire coté rouge */
+data R_combattant;
+	set R_combattant;
+	if winner = "Red" then Win = 1;
+	else Win = 0;
+run; 
+
+/* on crée une variable indiquant si le combat est une victoire coté bleu */
+data B_combattant;
+	set B_combattant;
+	if winner = "Blue" then Win = 1;
+	else Win = 0;
 run;
 
 
 
-/* Pourcentage de combat gagné*/
-/* Pourcentage de combat gagné par KO */
-/* Nombre de titres remportés*/
+
+
+  /**************************************/
+ /* Pourcentage de combat gagné par KO */
+/**************************************/  
+  
+
+
+  /*****************************/
+ /* Nombre de titres remportés*/
+/*****************************/ 
 /* Nombre de frappes tentée au global*/
 /* Nombre de frappes tentée à la tête*/
 /* Nombre de frappes atterrie à la tête*/
