@@ -145,6 +145,10 @@ run;
 /* 1 - Nous allons maintenant calculer les performances sportives par combattant. Pour chacun d'eux, calculer les indicateurs suivants : */
 /* Nombre de combat total*/
 
+proc sql;
+create table data_combattant as SELECT R_Fighter, B_Fighter, winner, title_bout,  R_HEAD
+run; QUIT;
+
 data nb_Combattant;
   set R_combattant B_combattant;
   rename R_Fighter=Fighter B_Fighter=Fighter;
@@ -157,6 +161,50 @@ create table Nombre_Match as SELECT Fighter, count(Fighter) as count
 RUN;QUIT;
  
 
+/* Nombre de titres remportés*/
+data r_tab;
+set data(keep = R_fighter Winner date title_bout);
+rename R_fighter = fighter;
+run; 
+
+proc sort data = r_tab;
+ by fighter title_bout;
+run;
+
+data r_tab;
+	set r_tab;
+	if title_bout = "True" and winner = "Red" then wintitre = 1;
+	else wintitre = 0;
+run; /* on a notre nouvelle variable qui indique un si match pour le titre et victoire du coté rouge */
+
+data b_tab;
+set ufc(keep = B_fighter Winner date title_bout);
+rename B_fighter = fighter;
+run; 
+proc sort data = b_tab;
+ by fighter title_bout;
+run;
+data b_tab;
+	set b_tab;
+	if title_bout = "True" and winner = "Blue" then wintitre = 1;
+	else wintitre = 0;
+run; /* on a notre nouvelle variable qui indique un si match pour le titre et victoire du coté bleu */
+
+data tab_sql;
+set r_tab b_tab;
+run;
+
+PROC SQL;
+CREATE table nodup_wintitre as
+SELECT fighter, max(date) as date FORMAT ddmmyy10. , sum(wintitre) as wintitre
+FROM tab_sql
+GROUP BY fighter;
+QUIT;
+proc sort data = nodup_wintitre ;
+by  descending wintitre;
+run;
+
+
 
 /* Pourcentage de combat gagné*/
 /* Pourcentage de combat gagné par KO */
@@ -167,7 +215,15 @@ RUN;QUIT;
 /* Nombre de frappes tentée aux corps*/
 /* Nombre de frappes atterrie aux corps*/
 
+R_HEAD est nombre de frappe à la tête ayant atterri
+BODY est est nombre de frappe au corps ayant atterri
+CLINCH est est nombre de frappe au corps à corps ayant atterri
+GROUND
+
+
 /* 2 - Mettez tous ces résultats dans un seul et même dataframe appeler "Stat_Global" */
 
 /* 3 - Effectuer une ACP sur les combattants et leurs statistiques*/
 /* Interprétez les résultats. Que pouvez-vous en conclure ?  */
+
+
