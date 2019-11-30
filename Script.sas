@@ -245,7 +245,7 @@ run;
 
   /**************************************/
  /* Pourcentage de combat gagné par KO */
-/**************************************/  
+/**************************************/ 
 data R_combattant;
     set data;
     keep R_fighter date R_win_by_KO_TKO; 
@@ -271,32 +271,117 @@ run;
 quit;
 
 proc sort data = Count_KO;
-by  descending Date;
+by  descending date;
+run;
+ 
+
+/*On extrait les colonnes qui serviront pour les prochaines questions*/
+
+data R_combattant;
+    set data;
+    keep R_fighter date R_avg_TOTAL_STR_att R_avg_BODY_att R_avg_HEAD_att R_avg_BODY_landed R_avg_HEAD_landed ; 
+    rename R_fighter = Fighter 
+           R_avg_TOTAL_STR_att = AvgTOTALSTR
+           R_avg_BODY_att = AvgBODY_att
+           R_avg_HEAD_att = AvgHEAD_att
+           R_avg_BODY_landed = AvgBODY_ld
+           R_avg_HEAD_landed = AvgHEAD_ld;
 run;
 
-  /**************************************/
- /* Pourcentage de combat gagné par KO */
-/**************************************/  
-  
+data B_combattant;
+    set data;
+    keep B_fighter date B_avg_TOTAL_STR_att B_avg_BODY_att B_avg_HEAD_att B_avg_BODY_landed B_avg_HEAD_landed ; 
+    rename B_fighter = Fighter 
+           B_avg_TOTAL_STR_att = AvgTOTALSTR
+           B_avg_BODY_att = AvgBODY_att
+           B_avg_HEAD_att = AvgHEAD_att
+           B_avg_BODY_landed = AvgBODY_ld
+           B_avg_HEAD_landed = AvgHEAD_ld;
+run;
 
-  /*****************************/
- /* Nombre de titres remportés*/
-/*****************************/ 
-/* Nombre de frappes tentée au global*/
-/* Nombre de frappes tentée à la tête*/
-/* Nombre de frappes atterrie à la tête*/
-/* Nombre de frappes tentée aux corps*/
-/* Nombre de frappes atterrie aux corps*/
+data Combattant;
+  set R_combattant B_combattant;
+run;
 
-R_HEAD est nombre de frappe à la tête ayant atterri
-BODY est est nombre de frappe au corps ayant atterri
-CLINCH est est nombre de frappe au corps à corps ayant atterri
-GROUND
+proc sql;
+ /**************************************/
+ /* Nombre de frappes tentée au global*/
+/**************************************/
+CREATE TABLE Count_AvgTOTALSTR as SELECT Fighter, date , AvgTOTALSTR
+                      FROM Combattant
+                      GROUP BY Fighter
+                      Having date=MAX(date);
+
+  /***********************************  **/
+ /* Nombre de frappes tentée à la tête*/
+/*************************************/
+CREATE TABLE Count_AvgHEAD_att as SELECT Fighter, date , AvgHEAD_att
+                      FROM Combattant
+                      GROUP BY Fighter
+                      Having date=MAX(date);
+  /***************************************/
+ /* Nombre de frappes atterrie à la tête*/
+/***************************************/
+CREATE TABLE Count_AvgHEAD_ld as SELECT Fighter, date , AvgHEAD_ld
+                      FROM Combattant
+                      GROUP BY Fighter
+                      Having date=MAX(date);
+  /*************************************/
+ /* Nombre de frappes tentée aux corps*/
+/*************************************/
+CREATE TABLE Count_AvgBODY_att as SELECT Fighter, date , AvgBODY_att
+                      FROM Combattant
+                      GROUP BY Fighter
+                      Having date=MAX(date);
+  /***************************************/
+ /* Nombre de frappes atterrie aux corps*/
+/***************************************/
+CREATE TABLE Count_AvgBODY_ld as SELECT Fighter, date , AvgBODY_ld
+                      FROM Combattant
+                      GROUP BY Fighter
+                      Having date=MAX(date);
+
+
+run;
+quit;
+
+proc sort data = Count_AvgTOTALSTR;
+by Fighter;
+run;
+
+proc sort data = Count_AvgHEAD_att;
+by Fighter;
+run;
+
+proc sort data = Count_AvgHEAD_ld;
+by Fighter;
+run;
+
+proc sort data = Count_AvgBODY_att;
+by Fighter;
+run;
+
+proc sort data = Count_AvgBODY_ld;
+by Fighter;
+run;
+
 
 
 /* 2 - Mettez tous ces résultats dans un seul et même dataframe appeler "Stat_Global" */
 
+data Stat_Global;
+   merge Count_AvgTOTALSTR Count_AvgHEAD_att Count_AvgBODY_att Count_AvgBODY_ld;
+   by Fighter date;
+run;
+
 /* 3 - Effectuer une ACP sur les combattants et leurs statistiques*/
+proc princomp DATA=Stat_Global OUT=Stat_Global_Coord OUTSTAT=Stat_Global_Statis N=5 prefix=axe;
+  var AvgTOTALSTR AvgBODY_att AvgHEAD_att AvgBODY_ld AvgHEAD_ld;
+run;
+
+PROC GPLOT DATA=Stat_Global_Coord;
+  plot axe1*axe3;
+run;
 /* Interprétez les résultats. Que pouvez-vous en conclure ?  */
 
 
