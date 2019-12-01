@@ -123,16 +123,18 @@ run;
 OUT= Recup les coordonees par individus 
 OUTSTAT=Recup les coordonees par variables
 */
-proc princomp DATA=Combattant OUT=coordon OUTSTAT=statis N=5 prefix=axe;
+
+proc princomp DATA=Combattant OUT=coordon OUTSTAT=statis N=4 prefix=axe plots=all;
   var Height Reach Weight Age;
 run;
+
 
 PROC GPLOT DATA=coordon;
   plot axe1*axe3;
 run;
 
 
-proc corresp data=Combattant_classes outc=coordonnees_MCA outf=coordonnees_var_MCA /*noprint*/ mca;
+proc corresp data=Combattant_classes outc=coordonnees_MCA outf=coordonnees_var_MCA  mca;
 tables Weight_class Height_class Reach_class age_class Stance;
 run;
 /* Interprétez les résultats. Que pouvez-vous en conclure ? */
@@ -380,8 +382,9 @@ proc princomp DATA=Stat_Global OUT=Stat_Global_Coord OUTSTAT=Stat_Global_Statis 
 run;
 
 PROC GPLOT DATA=Stat_Global_Coord;
-  plot axe1*axe3;
+  plot axe1*axe2;
 run;
-/* Interprétez les résultats. Que pouvez-vous en conclure ?  */
+
+
 
 
